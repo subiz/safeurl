@@ -25,7 +25,7 @@ Sample:
 ```go
 import (
     "fmt"
-    "github.com/doyensec/safeurl"
+    "github.com/subiz/safeurl"
 )
 
 func main() {
@@ -58,6 +58,6 @@ go test -v
 ```
 
 ## Credits
-This tool has been created by Viktor Chuchurski and Alessandro Cotto of [Doyensec LLC](https://www.doyensec.com) during our [25% research time](https://doyensec.com/careers.html). 
+This tool has been created by Viktor Chuchurski and Alessandro Cotto of [Doyensec LLC](https://www.doyensec.com) during our [25% research time](https://doyensec.com/careers.html).
 
 ![Doyensec Research](https://github.com/doyensec/inql/blob/master/docs/doyensec_logo.svg "Doyensec Logo")

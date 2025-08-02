@@ -1,4 +1,4 @@
-module github.com/doyensec/safeurl
+module github.com/subiz/safeurl
 
 go 1.24.2
 

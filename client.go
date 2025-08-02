@@ -10,7 +10,9 @@ import (
 	"net/http/httptrace"
 	urllib "net/url"
 	"strings"
+	"sync"
 	"syscall"
+	"time"
 )
 
 func buildHttpClient(wc *WrappedClient) *http.Client {
@@ -312,4 +314,78 @@ func (wc *WrappedClient) log(msg string) {
 	if wc.config.IsDebugLoggingEnabled {
 		fmt.Printf("[safeurl] %v\n", msg)
 	}
+}
+
+var (
+	ipLookupCache      = make(map[string]*cachedLookup)
+	ipLookupCacheMutex sync.Mutex
+)
+
+type cachedLookup struct {
+	ips        []net.IP
+	expiration time.Time
+}
+
+func lookupIPWithCache(hostname string) ([]net.IP, error) {
+	ipLookupCacheMutex.Lock()
+	defer ipLookupCacheMutex.Unlock()
+
+	if cached, found := ipLookupCache[hostname]; found && time.Now().Before(cached.expiration) {
+		return cached.ips, nil
+	}
+
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	ipLookupCache[hostname] = &cachedLookup{
+		ips:        ips,
+		expiration: time.Now().Add(15 * time.Minute),
+	}
+	return ips, nil
+}
+
+// ResolveHref resolves an href relative to a base URL (currentUrl). It returns
+// the absolute URL and a boolean indicating if the URL is a safe, external
+// resource. The function checks for loopback and private IPs to prevent SSRF
+// vulnerabilities.
+func ResolveHref(currentUrl, href string) (string, bool) {
+	base, err := urllib.Parse(currentUrl)
+	if err != nil {
+		return "", false
+	}
+
+	ref, err := urllib.Parse(href)
+	if err != nil {
+		return "", false
+	}
+
+	fullurl := strings.TrimSpace(base.ResolveReference(ref).String())
+	u, err := urllib.Parse(fullurl)
+	if err != nil {
+		return fullurl, false // Disallow invalid URLs
+	}
+
+	hostname := u.Hostname()
+	if !strings.Contains(hostname, ".") {
+		return fullurl, false // localhost, api, ...
+	}
+
+	var ips []net.IP
+	if ip := net.ParseIP(hostname); ip != nil {
+		ips = append(ips, ip)
+	} else {
+		ips, err = lookupIPWithCache(hostname)
+		if err != nil {
+			return fullurl, false
+		}
+	}
+
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() {
+			return fullurl, false
+		}
+	}
+	return fullurl, true
 }

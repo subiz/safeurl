@@ -458,3 +458,50 @@ func TestInvalidHostValidation(t *testing.T) {
 	}
 
 }
+
+type hrefTestCase struct {
+	currentUrl string
+	href       string
+	safe       bool
+	resolved   string
+}
+
+func TestIsSafeHref(t *testing.T) {
+	testcases := []hrefTestCase{
+		{currentUrl: "https://google.com", href: "javascript:;", safe: false},
+		{currentUrl: "https://google.com", href: "https://127.0.0.1", safe: false},
+		{currentUrl: "https://google.com", href: "mailto:abc@gmail.com", safe: false},
+		{currentUrl: "http://127.0.0.1", href: "../d", safe: false},
+		{currentUrl: "https://google.com", href: "//127.0.0.1", safe: false},
+		{currentUrl: "https://google.com", href: "//127.0.0.1", safe: false},
+		{currentUrl: "https://google.com", href: "//localhost:80", safe: false},
+		{currentUrl: "https://google.com", href: "http://localhost.localdomain", safe: false},
+		{currentUrl: "https://google.com", href: "http://2130706433", safe: false},
+		{currentUrl: "https://google.com", href: "file:///etc/passwd", safe: false},
+
+		{currentUrl: "https://google.com", href: "#", safe: true, resolved: "https://google.com"},
+		{currentUrl: "https://google.com", href: "/a", safe: true, resolved: "https://google.com/a"},
+		{currentUrl: "https://google.com", href: "", safe: true, resolved: "https://google.com"},
+		{currentUrl: "https://google.com", href: ".", safe: true, resolved: "https://google.com/"},
+		{currentUrl: "https://google.com", href: "..", safe: true, resolved: "https://google.com/"},
+		{currentUrl: "https://google.com/a/b/c", href: "../d", safe: true, resolved: "https://google.com/a/d"},
+	}
+
+	for _, tc := range testcases {
+		fullurl, safe := ResolveHref(tc.currentUrl, tc.href)
+		if safe && !tc.safe {
+			t.Errorf("not safe href %s %s was accepted", tc.currentUrl, tc.href)
+			continue
+		}
+
+		if !safe && tc.safe {
+			t.Errorf("safe href %s %s was rejected", tc.currentUrl, tc.href)
+			continue
+		}
+
+		if safe && fullurl != tc.resolved {
+			t.Errorf("href %s %s was resolved to %s, want %s", tc.currentUrl, tc.href, fullurl, tc.resolved)
+			continue
+		}
+	}
+}
