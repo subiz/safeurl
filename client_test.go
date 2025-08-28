@@ -13,7 +13,7 @@ func TestBlockedIP(t *testing.T) {
 
 	client := Client(cfg)
 
-	ips := []string{"127.0.0.1", "[::1]",
+	ips := []string{"127.0.0.1", "[::1]", "192.168.0.1",
 		// decimal
 		"2130706433", "3232235777",
 		// octal
@@ -501,6 +501,47 @@ func TestIsSafeHref(t *testing.T) {
 
 		if safe && fullurl != tc.resolved {
 			t.Errorf("href %s %s was resolved to %s, want %s", tc.currentUrl, tc.href, fullurl, tc.resolved)
+			continue
+		}
+	}
+}
+
+func TestIsSafe(t *testing.T) {
+	testcases := map[string]bool{
+		"":                   false,
+		"\\":                 false,
+		"localhost":          false,
+		"example.com":        true,
+		"https://google.com": true,
+		"google.com":         true,
+		"//google.com":       true,
+	}
+
+	for url, want := range testcases {
+		safe := IsSafe(url)
+		if safe != want {
+			t.Errorf("expect %s to be %v but got %v", url, want, safe)
+			continue
+		}
+	}
+}
+
+func TestIsSafeDomain(t *testing.T) {
+	testcases := map[string]bool{
+		"":                   false,
+		"\\":                 false,
+		"localhost":          false,
+		"example.com":        true,
+		"127.0.0.1":          false,
+		"https://google.com": true,
+		"google.com":         true,
+		"//google.com":       true,
+	}
+
+	for url, want := range testcases {
+		_, safe := IsSafeDomain(url)
+		if safe != want {
+			t.Errorf("expect %s to be %v but got %v", url, want, safe)
 			continue
 		}
 	}

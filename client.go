@@ -389,3 +389,30 @@ func ResolveHref(currentUrl, href string) (string, bool) {
 	}
 	return fullurl, true
 }
+
+func IsSafe(url string) bool {
+	u, err := urllib.Parse(url)
+	u.Scheme = "http"
+	if err != nil {
+		return false
+	}
+	_, safe := ResolveHref(u.String(), "")
+	return safe
+}
+
+func IsSafeDomain(url string) (string, bool) {
+	url = strings.ToLower(strings.TrimSpace(url))
+	if url == "" {
+		return "", false
+	}
+
+	u, err := urllib.Parse(url)
+	if err != nil {
+		return "", false
+	}
+	u.RawQuery = ""
+	u.Fragment = ""
+	u.Scheme = "http"
+	_, safe := ResolveHref(u.String(), "")
+	return u.Hostname(), safe
+}
