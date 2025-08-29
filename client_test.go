@@ -526,22 +526,46 @@ func TestIsSafe(t *testing.T) {
 	}
 }
 
-func TestIsSafeDomain(t *testing.T) {
+func TestIsSafeDomainSafe(t *testing.T) {
 	testcases := map[string]bool{
-		"":                   false,
-		"\\":                 false,
-		"localhost":          false,
-		"example.com":        true,
-		"127.0.0.1":          false,
-		"https://google.com": true,
-		"google.com":         true,
-		"//google.com":       true,
+		"":                    false,
+		"\\":                  false,
+		"localhost":           false,
+		"example.com":         true,
+		"tranducck.github.io": true,
+		"127.0.0.1":           false,
+		"https://google.com":  true,
+		"google.com":          true,
+		"//google.com":        true,
 	}
 
 	for url, want := range testcases {
 		_, safe := IsSafeDomain(url)
 		if safe != want {
 			t.Errorf("expect %s to be %v but got %v", url, want, safe)
+			continue
+		}
+	}
+}
+
+func TestIsSafeDomainOut(t *testing.T) {
+	testcases := map[string]string{
+		"":                    "",
+		"\\":                  "",
+		"localhost":           "localhost",
+		"example.com":         "example.com",
+		"tranducck.github.io": "tranducck.github.io",
+		"127.0.0.1":           "127.0.0.1",
+		"https://google.com":  "google.com",
+		"google.com":          "google.com",
+		"//google.com":        "google.com",
+		"//google.com:8080":   "google.com",
+	}
+
+	for url, want := range testcases {
+		domain, _ := IsSafeDomain(url)
+		if domain != want {
+			t.Errorf("expect %s to be %s but got %s", url, want, domain)
 			continue
 		}
 	}

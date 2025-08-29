@@ -413,6 +413,16 @@ func IsSafeDomain(url string) (string, bool) {
 	u.RawQuery = ""
 	u.Fragment = ""
 	u.Scheme = "http"
+
+	// remove port part
+	if strings.Contains(u.Host, ":") {
+		u.Host = strings.Split(u.Host, ":")[0]
+	}
+
 	_, safe := ResolveHref(u.String(), "")
-	return u.Hostname(), safe
+	u, _ = urllib.Parse(u.String())
+	if u == nil {
+		return "", false
+	}
+	return u.Host, safe
 }
