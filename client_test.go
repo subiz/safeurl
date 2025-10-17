@@ -485,6 +485,11 @@ func TestIsSafeHref(t *testing.T) {
 		{currentUrl: "https://google.com", href: ".", safe: true, resolved: "https://google.com/"},
 		{currentUrl: "https://google.com", href: "..", safe: true, resolved: "https://google.com/"},
 		{currentUrl: "https://google.com/a/b/c", href: "../d", safe: true, resolved: "https://google.com/a/d"},
+		{currentUrl: "https://google.com/a/b/c", href: "./d", safe: true, resolved: "https://google.com/a/b/d"},
+		{currentUrl: "https://google.com/a/b/c.html", href: "./d", safe: true, resolved: "https://google.com/a/b/d"},
+		{currentUrl: "https://google.com/a/b/c", href: "d", safe: true, resolved: "https://google.com/a/b/d"},
+		{currentUrl: "https://google.com/a/b/c", href: "/d", safe: true, resolved: "https://google.com/d"},
+		{currentUrl: "file:///Users/thanh/Developer/didong24/index.html", href: "a", safe: false, resolved: "file:///Users/thanh/Developer/didong24/a"},
 	}
 
 	for _, tc := range testcases {
@@ -519,6 +524,21 @@ func TestIsSafe(t *testing.T) {
 
 	for url, want := range testcases {
 		safe := IsSafe(url)
+		if safe != want {
+			t.Errorf("expect %s to be %v but got %v", url, want, safe)
+			continue
+		}
+	}
+}
+
+func TestIsSafeDomain(t *testing.T) {
+	testcases := map[string]bool{
+		"": false,
+		"https://hdsd.minvoice.com.vn/minvoice2/huong-dan/chinh-sua-mau-hoa-don/": true,
+	}
+
+	for url, want := range testcases {
+		_, safe := IsSafeDomain(url)
 		if safe != want {
 			t.Errorf("expect %s to be %v but got %v", url, want, safe)
 			continue
@@ -567,6 +587,24 @@ func TestIsSafeDomainOut(t *testing.T) {
 		if domain != want {
 			t.Errorf("expect %s to be %s but got %s", url, want, domain)
 			continue
+		}
+	}
+}
+
+func TestDefaultClient(t *testing.T) {
+	urls := []string{"http://10.124.10.10", "http://192.168.0.1"}
+	for _, u := range urls {
+		_, err := DefaultClient.Get(u)
+		if err == nil {
+			t.Errorf("IP in custom CIDR blocklist not blocked. client did not return error")
+		}
+	}
+
+	urls = []string{"https://google.com", "https://subiz.com.vn"}
+	for _, u := range urls {
+		_, err := DefaultClient.Get(u)
+		if err != nil {
+			t.Errorf("IP in custom CIDR blocklist not blocked. client did not return error")
 		}
 	}
 }

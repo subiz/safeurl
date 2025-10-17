@@ -15,6 +15,16 @@ import (
 	"time"
 )
 
+var DefaultClient *WrappedClient
+
+func init() {
+	cfg := GetConfigBuilder().
+		EnableIPv6(true).
+		Build()
+
+	DefaultClient = Client(cfg)
+}
+
 func buildHttpClient(wc *WrappedClient) *http.Client {
 	client := &http.Client{
 		Timeout:       wc.config.Timeout,
