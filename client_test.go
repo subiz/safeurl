@@ -520,6 +520,7 @@ func TestIsSafe(t *testing.T) {
 		"https://google.com": true,
 		"google.com":         true,
 		"//google.com":       true,
+		"abc@gmail.com":      false,
 	}
 
 	for url, want := range testcases {
@@ -557,6 +558,7 @@ func TestIsSafeDomainSafe(t *testing.T) {
 		"https://google.com":  true,
 		"google.com":          true,
 		"//google.com":        true,
+		"abc@gmail.com":       false,
 	}
 
 	for url, want := range testcases {

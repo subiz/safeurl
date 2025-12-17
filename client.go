@@ -377,6 +377,11 @@ func ResolveHref(currentUrl, href string) (string, bool) {
 		return fullurl, false // Disallow invalid URLs
 	}
 
+	if u.User.Username() != "" {
+		// user:pass@gmail.com -> invalid
+		return fullurl, false
+	}
+
 	hostname := u.Hostname()
 	if !strings.Contains(hostname, ".") {
 		return fullurl, false // localhost, api, ...
